@@ -1,6 +1,35 @@
 /* global asyncTest */
 
+import sessionFixtures from 'fixtures/session-fixtures';
 import siteFixtures from 'fixtures/site_fixtures';
+
+function currentUser() {
+  return Discourse.User.create(sessionFixtures['/session/current.json'].current_user);
+}
+
+function logIn() {
+  Discourse.User.resetCurrent(currentUser());
+}
+
+const Plugin = $.fn.modal;
+const Modal = Plugin.Constructor;
+
+function AcceptanceModal(option, _relatedTarget) {
+  return this.each(function () {
+    var $this   = $(this);
+    var data    = $this.data('bs.modal');
+    var options = $.extend({}, Modal.DEFAULTS, $this.data(), typeof option === 'object' && option);
+
+    if (!data) $this.data('bs.modal', (data = new Modal(this, options)));
+    data.$body = $('#ember-testing');
+
+    if (typeof option === 'string') data[option](_relatedTarget);
+    else if (options.show) data.show(_relatedTarget);
+  });
+}
+
+window.bootbox.$body = $('#ember-testing');
+$.fn.modal = AcceptanceModal;
 
 function acceptance(name, options) {
   module("Acceptance: " + name, {
@@ -13,8 +42,8 @@ function acceptance(name, options) {
           options.setup.call(this);
         }
 
-        if (options.user) {
-          Discourse.User.resetCurrent(Discourse.User.create(options.user));
+        if (options.loggedIn) {
+          logIn();
         }
 
         if (options.settings) {
@@ -61,4 +90,4 @@ function fixture(selector) {
   return $("#qunit-fixture");
 }
 
-export { acceptance, controllerFor, asyncTestDiscourse, fixture };
+export { acceptance, controllerFor, asyncTestDiscourse, fixture, logIn, currentUser };
